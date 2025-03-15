@@ -11,6 +11,11 @@ def create_db():
                     "passhash"	,
                     PRIMARY KEY("id" AUTOINCREMENT)
                     );""")
+    cur.execute("""CREATE TABLE "info" (
+                "id",
+                "reg_time",
+                "last_auth"
+                );""")
 
 
 def get_hash(s):
