@@ -28,9 +28,10 @@ class Database:
                     (?, ?)""", (str(datetime.datetime.now()), str(datetime.datetime.now())))
         self.con.commit()
 
-    def __get_by_id(self, id):
+    def _get_by_id(self, id):
         get_response = self.cur.execute("""
-                                    SELECT id, name FROM person WHERE id = ?""", str(id))
+                                    SELECT * FROM (SELECT id, reg_time, last_auth FROM info) RIGHT JOIN person ON person.id = ?""",
+                                        str(id))
         return get_response.fetchall()
 
     def find_by_name(self, name: str) -> list:

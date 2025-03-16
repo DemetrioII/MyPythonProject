@@ -33,4 +33,6 @@ async def post_root(login: str = Form(None), password: str = Form(None)):
     except Exception as e:
         return f"{str(e)}"
 
+print(db._get_by_id(21))
+
 # db.close()
