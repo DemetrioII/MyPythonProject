@@ -6,11 +6,13 @@
     <link href=" {{ url_for('static', path='/styles.css') }}" rel="stylesheet" />
 </head>
 <body>
-    <form name="register-form" action="/login" method="post">
+    <form name="register-form" action="/register" method="post">
         <label>Введите логин</label><br/>
         <input name="login" type="text" required/><br/>
         <label>Введите пароль</label><br/>
-        <input name="password" type="password" required/>
+        <input name="password" type="password" required/><br/>
+        <label>Повторите пароль</label><br/>
+        <input name="password_repeat" type="password" required><br/>
         <input content="Done" type="submit">
     </form>
 </body>

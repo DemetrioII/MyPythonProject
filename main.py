@@ -45,7 +45,10 @@ async def post_register_form(login: str = Form(None), password: str = Form(None)
     try:
         if password != password_repeat:
             return f"Passwords are different"
-        db.create_person(login, password_hash(password))
+        if password is None:
+            return f"password is none"
+        db.create_person(name=login, password=password_hash(password))
+        return f"Success"
     except Exception as e:
         return f"{str(e)}"
 
