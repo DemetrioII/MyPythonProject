@@ -34,6 +34,12 @@ class Database:
                                         str(id))
         return get_response.fetchall()
 
+    def get_password_by_name(self, name: str) -> str:
+        get_response = self.cur.execute("""
+            SELECT name, passhash FROM person WHERE name = ?
+        """, (name,)).fetchone()[1]
+        return get_response
+
     def find_by_name(self, name: str) -> list:
         get_response = self.cur.execute("""
             SELECT * FROM person WHERE name = ?

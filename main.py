@@ -28,8 +28,10 @@ async def get_login_form(request: Request):
 @app.post("/login", response_class=HTMLResponse)
 async def post_root(login: str = Form(None), password: str = Form(None)):
     try:
-        db.create_person(name=login, password=password_hash(password))
-        return f"Success"
+        hash_from_db = db.get_password_by_name(name=login)
+        if hash_from_db == password_hash(password):
+            return f"Success"
+        return f"Wrong Password"
     except Exception as e:
         return f"{str(e)}"
 
