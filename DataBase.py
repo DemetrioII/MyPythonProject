@@ -10,6 +10,7 @@ class Database:
                         "id"	INTEGER NOT NULL UNIQUE,
                         "name"	TEXT NOT NULL,
                         "passhash"	TEXT NOT NULL,
+                        "image" BLOB NOT NULL,
                         PRIMARY KEY("id" AUTOINCREMENT)
                         );""")
         self.cur.execute("""CREATE TABLE IF NOT EXISTS "info" (
@@ -20,31 +21,26 @@ class Database:
                         );""")
         self.con.commit()
 
-    def create_person(self, name, password):
-        self.cur.execute("""INSERT INTO person (name, passhash) VALUES
-                    (?, ?)
-                    """, (name, password))
+    def create_person(self, name, password, image):
+        self.cur.execute("""INSERT INTO person (name, passhash, image) VALUES
+                    (?, ?, ?)
+                    """, (name, password, image))
         self.cur.execute("""INSERT INTO info (reg_time, last_auth) VALUES
                     (?, ?)""", (str(datetime.datetime.now()), str(datetime.datetime.now())))
         self.con.commit()
 
-    def _get_by_id(self, id: int) -> list:
+    def __get_by_id(self, id: int):
         get_response = self.cur.execute("""
                                     SELECT * FROM (SELECT id, reg_time, last_auth FROM info) RIGHT JOIN person ON person.id = ?""",
                                         str(id))
-        return get_response.fetchall()
+        return get_response.fetchone()
 
-    def get_password_by_name(self, name: str) -> str:
-        get_response = self.cur.execute("""
-            SELECT name, passhash FROM person WHERE name = ?
-        """, (name,)).fetchone()[1]
-        return get_response
-
-    def find_by_name(self, name: str) -> list:
-        get_response = self.cur.execute("""
+    def find_by_name(self, name: str):
+        fid = self.cur.execute("""
             SELECT * FROM person WHERE name = ?
-        """, (name,))
-        return get_response.fetchall()
+        """, (name,)).fetchone()[0]
+        get_response = self.__get_by_id(int(fid))
+        return get_response
 
     def delete_by_name(self, name: str):
         try:
