@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VK ID Auth</title>
+</head>
+
+<body>
+    <div id="VkIdSdkOneTap">
+        <script src="https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js"></script>
+        <script type="text/javascript">
+
+            // var http = require('http'),
+            //     httpProxy = require('http-proxy');
+            // //
+            // // Create your proxy server and set the target in the options.
+            // //
+            // httpProxy.createProxyServer({target: 'https://id.vk.com/vkid_sdk_get_config?app_id=53265566'}).listen(8000);
+
+            // Node.js Express example
+
+            // const express = require('express');
+            // const fetch = require('node-fetch');
+
+            // const app = express();
+
+            // app.get('/vkid-proxy', async (req, res) => {
+            //     try {
+            //         const response = await fetch(`https://id.vk.com/vkid_sdk_get_config?app_id=${req.query.app_id}`);
+            //         const data = await response.json();
+            //         res.json(data);
+            //     } catch (error) {
+            //         res.status(500).json({ error: error.message });
+            //     }
+            // });
+
+            // app.listen(3000);
+
+            // 
+            if ('VKIDSDK' in window) {
+                const VKID = window.VKIDSDK;
+                const state = generateRandomString(16); // Генерируем state для защиты от CSRF
+
+                // Инициализация конфигурации VK ID
+                VKID.Config.init({
+                    app: 53265566,
+                    redirectUrl: window.location.origin + '/vk-callback',
+                    responseMode: VKID.ConfigResponseMode.Redirect,
+                    source: VKID.ConfigSource.LOWCODE,
+                    state: state,
+                    scope: 'email'
+                });
+
+                // Инициализация виджета
+                const oneTap = new VKID.OneTap();
+
+                // Рендер виджета
+                oneTap.render({
+                    container: document.currentScript.parentElement,
+                    showAlternativeLogin: true
+                });
+
+                // Обработка ошибок
+                oneTap.on(VKID.WidgetEvents.ERROR, function (error) {   // Возможно, стоит получать код на фронте..
+                    console.error("VK ID Error:", error);
+                    window.open(
+                        '/auth-error'
+                    );
+                });
+            }
+
+            // Генерация случайной строки для state
+            function generateRandomString(n, charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789') {
+                const cryptoObj = window.crypto || window.msCrypto;
+                if (cryptoObj && cryptoObj.getRandomValues) {
+                    const values = new Uint32Array(n);
+                    cryptoObj.getRandomValues(values);
+                    return Array.from(values)
+                        .map(x => charset[x % charset.length])
+                        .join('');
+                } else {
+                    let result = '';
+                    for (let i = 0; i < n; i++) {
+                        result += charset.charAt(Math.floor(Math.random() * charset.length));
+                    }
+                    return result;
+                }
+            }
+        </script>
+    </div>
+</body>
+
+</html>
