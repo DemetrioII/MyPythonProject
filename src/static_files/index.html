@@ -12,45 +12,20 @@
         <script src="https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js"></script>
         <script type="text/javascript">
 
-            // var http = require('http'),
-            //     httpProxy = require('http-proxy');
-            // //
-            // // Create your proxy server and set the target in the options.
-            // //
-            // httpProxy.createProxyServer({target: 'https://id.vk.com/vkid_sdk_get_config?app_id=53265566'}).listen(8000);
-
-            // Node.js Express example
-
-            // const express = require('express');
-            // const fetch = require('node-fetch');
-
-            // const app = express();
-
-            // app.get('/vkid-proxy', async (req, res) => {
-            //     try {
-            //         const response = await fetch(`https://id.vk.com/vkid_sdk_get_config?app_id=${req.query.app_id}`);
-            //         const data = await response.json();
-            //         res.json(data);
-            //     } catch (error) {
-            //         res.status(500).json({ error: error.message });
-            //     }
-            // });
-
-            // app.listen(3000);
-
-            // 
             if ('VKIDSDK' in window) {
                 const VKID = window.VKIDSDK;
-                const state = generateRandomString(16); // Генерируем state для защиты от CSRF
+                const state = generateRandomString(16);
+                const code_challenge = sha256(generateRandomString(64));
 
                 // Инициализация конфигурации VK ID
                 VKID.Config.init({
                     app: 53265566,
-                    redirectUrl: window.location.origin + '/vk-callback',
+                    redirectUrl: "http://localhost/vk-callback", // возможно придется поменять на basedomen, который будет храниться как переменная окружения
                     responseMode: VKID.ConfigResponseMode.Redirect,
                     source: VKID.ConfigSource.LOWCODE,
                     state: state,
-                    scope: 'email'
+                    code_challenge: code_challenge,
+                    scope: 'phone',
                 });
 
                 // Инициализация виджета
@@ -62,16 +37,28 @@
                     showAlternativeLogin: true
                 });
 
+
+                // Как получить и обработать данные
+                // После вызова метода oneTap.render() в контейнере появится кнопка One Tap. Когда пользователь авторизуется в сервисе, 
+                // SDK передает код подтверждения code, строку состояния state и идентификатор устройства device_id. 
+                // Есть два способа получить эти данные:
+                // 1) через URL перенаправления — используется по умолчанию (ВЫБРАН В ПРОЕКТЕ)
+                // 2) через callback.
+                // Получение code, state и device_id через URL перенаправления не требует каких-либо действий. Данные будут переданы в query-параметрах на адрес, 
+                // который указан в поле redirectUrl настроек SDK. (ЗА ЭТО ОТВЧАЕТ ENDPOINT FASTAPI)
+                // Однако если вы получаете параметры через callback, настройте обработчик успешной авторизации (НЕ ИНТЕРЕСУЕТ)
+
                 // Обработка ошибок
-                oneTap.on(VKID.WidgetEvents.ERROR, function (error) {   // Возможно, стоит получать код на фронте..
+                oneTap.on(VKID.WidgetEvents.ERROR, function (error) {   //Нужно получать код с обменом на backend
                     console.error("VK ID Error:", error);
                     window.open(
                         '/auth-error'
                     );
                 });
+            } else {
+                console.log("VK SDK is not downloaded")
             }
-
-            // Генерация случайной строки для state
+            
             function generateRandomString(n, charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789') {
                 const cryptoObj = window.crypto || window.msCrypto;
                 if (cryptoObj && cryptoObj.getRandomValues) {
@@ -88,6 +75,13 @@
                     return result;
                 }
             }
+
+            async function sha256(input) {
+                const bytes = new TextEncoder().encode(input);
+                const hash = await crypto.subtle.digest('SHA-256', bytes);
+                return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
         </script>
     </div>
 </body>
