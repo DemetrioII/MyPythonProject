@@ -69,13 +69,17 @@ async def get_user_info(user_id: int):
             "v":"5.199",
         }
         user_info = get("https://api.vk.com/method/users.get", params=user_params).json()
-        time.sleep(0.3)
+        time.sleep(0.1)
+
+        # tmp_user_info = user_info["response"][0]
+        # del tmp_user_info["id"]
+        # del tmp_user_info["can_access_closed"]
+        # del tmp_user_info["is_closed"]
+
         tmp_user_info = user_info["response"][0]
-        del tmp_user_info["id"]
-        del tmp_user_info["can_access_closed"]
-        del tmp_user_info["is_closed"]
-        
-        data[id] = tmp_user_info
+        data[id] = {"first_name": tmp_user_info["first_name"], "last_name": tmp_user_info["last_name"]}
+        # data[id] = tmp_user_info
+
     return data
 
 if __name__ == "__main__":
