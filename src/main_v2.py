@@ -69,7 +69,7 @@ async def get_user_info(user_id: int):
             "v":"5.199",
         }
         user_info = get("https://api.vk.com/method/users.get", params=user_params).json()
-        time.sleep(0.1)
+        time.sleep(0.3)
 
         # tmp_user_info = user_info["response"][0]
         # del tmp_user_info["id"]
