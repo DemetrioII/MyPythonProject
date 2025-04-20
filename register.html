@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Registration</title>
+        <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="auth-container">
+    <h1>Registration</h1>
+    <form method="post" action="/register" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="login">Login: </label><br>
+            <input type="text" id="login" name="login" required>
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="password">Password: </label><br>
+            <small class="hint">At least 7 characters </small><br>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="password_repeat">Repeat password: </label><br>
+            <input type="password" id="password_repeat" name="password_repeat" required>
+        </div>
+        <div class="form-group">
+            <lable for="image">Avatar: </lable>
+            <input type="file" id="image" name="image" accept="image/*">
+        </div>
+        <button type="submit" class="btn">Sign up </button>
+    </form>
+    <p>already have an account? <a href="index.html">log in</a></p>
+</div>
+<script src="/static/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Profile{{name}}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>user profile: {{name}}</h1>
+        <a href="/login" class="logout-btn">exit</a>
+    </div>
+    <div class="profile-content">
+        <div class="avatar-container">
+            <img src="data:image/jpeg;base64, {{photo}}" alt="Avatar" class="avatar">
+        </div>
+        <div class="profile-info">
+            <p><strong>registration date:</strong> {{register_time}}</p>
+        </div>
+    </div>
+</div>
+<script src="/static/script.js"></script>
+</body>
+</html>
