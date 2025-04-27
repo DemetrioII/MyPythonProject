@@ -3,15 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <title>Test</title>
-    <link href=" {{ url_for('static', path='/styles.css') }}" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        /* Анимация фона */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Стили формы */
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(0.8) translateY(50px);
+            opacity: 0;
+            animation: floatUp 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation-delay: 0.3s;
+        }
+
+        /* Анимация выплывания формы */
+        @keyframes floatUp {
+            0% {
+                transform: scale(0.8) translateY(50px);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05) translateY(-10px);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Анимация элементов формы */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .form-title {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transform: translateY(20px);
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+            animation-delay: 0.8s;
+        }
+
+        .form-group {
+            position: relative;
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        .form-group:nth-child(1) {
+            animation: fadeIn 0.6s ease-out forwards;
+            animation-delay: 1s;
+        }
+
+        .form-group:nth-child(2) {
+            animation: fadeIn 0.6s ease-out forwards;
+            animation-delay: 1.2s;
+        }
+
+        .submit-btn {
+            transform: translateY(20px);
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out forwards;
+            animation-delay: 1.4s;
+        }
+
+        .form-footer {
+            transform: translateY(20px);
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out forwards;
+            animation-delay: 1.6s;
+        }
+
+        @keyframes fadeIn {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Остальные стили (как в предыдущем примере) */
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .submit-btn {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #e73c7e;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .submit-btn:hover {
+            background: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .form-footer a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Эффект плавания после загрузки */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+    </style>
 </head>
 <body>
-    <form name="login-form" action="/login" method="post">
-        <label>Введите логин</label><br/>
-        <input name="login" type="text" required/><br/>
-        <label>Введите пароль</label><br/>
-        <input name="password" type="password" required/>
-        <input content="Done" type="submit">
+    <form name="login-form" action="/login" method="post" enctype="application/x-www-form-urlencoded">
+        <div class="form-group">
+            <label for="login">Введите логин</label><br/>
+            <input id="login" name="username" type="text" required/><br/>
+        </div>
+        <div class="form-group">
+            <label for="password">Введите пароль</label><br/>
+            <input id="password" name="password" type="password" required/>
+        </div>
+        <input class="submit-btn" content="Done" type="submit">
     </form>
 </body>
 </html>

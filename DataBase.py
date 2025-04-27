@@ -11,6 +11,7 @@ class Database:
                         "name"	TEXT NOT NULL,
                         "passhash"	TEXT NOT NULL,
                         "image" BLOB NOT NULL,
+                        "disabled" BOOLEAN,
                         PRIMARY KEY("id" AUTOINCREMENT)
                         );""")
         self.cur.execute("""CREATE TABLE IF NOT EXISTS "info" (
@@ -21,10 +22,10 @@ class Database:
                         );""")
         self.con.commit()
 
-    def create_person(self, name, password, image):
-        self.cur.execute("""INSERT INTO person (name, passhash, image) VALUES
-                    (?, ?, ?)
-                    """, (name, password, image))
+    def create_person(self, name, password, image, disabled):
+        self.cur.execute("""INSERT INTO person (name, passhash, image, disabled) VALUES
+                    (?, ?, ?, ?)
+                    """, (name, password, image, disabled))
         self.cur.execute("""INSERT INTO info (reg_time, last_auth) VALUES
                     (?, ?)""", (str(datetime.datetime.now()), str(datetime.datetime.now())))
         self.con.commit()
@@ -36,11 +37,11 @@ class Database:
         return get_response.fetchone()
 
     def find_by_name(self, name: str):
-        fid = self.cur.execute("""
-            SELECT * FROM person WHERE name = ?
-        """, (name,)).fetchone()[0]
-        get_response = self.__get_by_id(int(fid))
-        return get_response
+        fid = self.cur.execute("""SELECT * FROM person WHERE name = ?""", (name,)).fetchone()
+        if fid:
+            return fid
+            get_response = self.__get_by_id(int(fid))
+            return get_response
 
     def delete_by_name(self, name: str):
         try:
