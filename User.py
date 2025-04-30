@@ -101,7 +101,6 @@ async def get_current_user(token: str = Depends(get_token_from_cookie)):
     return user
 
 
-
 async def get_current_active_user(
         current_user: User = Depends(get_current_user)) -> User:  # Явно указываем возвращаемый тип
     '''if current_user.disabled:

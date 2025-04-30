@@ -88,8 +88,17 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 async def profile_page(request: Request, current_user: User = Depends(get_current_active_user)):
     return templates.TemplateResponse(
         "profile.html",
-        {"request": request, "name": current_user.name, "user": current_user}
+        {"request": request, "name": current_user.name, "photo": db.find_by_name(current_user.name)[3]}
     )
+
+
+@app.post("/delete_user")
+async def delete_user(request: Request, current_user: User = Depends(get_current_active_user)):
+    db.delete_by_name(current_user.name)
+
+    response = RedirectResponse(url="/register", status_code=302)
+    response.delete_cookie(key="access_token")  # Точное имя куки
+    return response
 
 
 @app.get("/register", response_class=HTMLResponse)

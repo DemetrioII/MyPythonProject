@@ -1,20 +1,181 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Test</title>
-    <link href=" {{ url_for('static', path='/styles.css') }}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .form-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 400px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .form-container h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            background-color: #f9f9f9;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 8px rgba(102, 126, 234, 0.3);
+        }
+
+        input[type="file"] {
+            padding: 10px;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            background: #667eea;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        input[type="file"]::-webkit-file-upload-button:hover {
+            background: #5a67d8;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            animation: floatButton 2s infinite;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300%;
+            height: 300%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 10%, transparent 10.01%);
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            z-index: -1;
+        }
+
+        .submit-btn:hover::before {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                transform: translateY(40px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes floatButton {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .form-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <form name="register-form" action="/register" method="post" enctype="multipart/form-data">
-        <label>Введите логин</label><br/>
-        <input name="username" type="text" required/><br/>
-        <label>Введите пароль</label><br/>
-        <input name="password" type="password" required/><br/>
-        <label>Повторите пароль</label><br/>
-        <input name="password_repeat" type="password" required><br/>
-        <input type="file" name="image" accept="image/*" required /><br/>
-        <input content="Done" type="submit">
-    </form>
+    <div class="form-container">
+        <h2>Регистрация</h2>
+        <form name="register-form" action="/register" method="post" enctype="multipart/form-data">
+            <div class="input-group">
+                <label>Введите логин</label>
+                <input name="username" type="text" required/>
+            </div>
+            <div class="input-group">
+                <label>Введите пароль</label>
+                <input name="password" type="password" required/>
+            </div>
+            <div class="input-group">
+                <label>Повторите пароль</label>
+                <input name="password_repeat" type="password" required>
+            </div>
+            <div class="input-group">
+                <label>Загрузите фото</label>
+                <input type="file" name="image" accept="image/*" required />
+            </div>
+            <button type="submit" class="submit-btn">Создать аккаунт</button>
+        </form>
+    </div>
 </body>
 </html>
