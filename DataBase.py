@@ -12,6 +12,7 @@ class Database:
                         "passhash"	TEXT NOT NULL,
                         "image" BLOB NOT NULL,
                         "disabled" BOOLEAN,
+                        "vk_id" INTEGER,
                         PRIMARY KEY("id" AUTOINCREMENT)
                         );""")
         self.cur.execute("""CREATE TABLE IF NOT EXISTS "info" (
@@ -23,8 +24,8 @@ class Database:
         self.con.commit()
 
     def create_person(self, name, password, image, disabled):
-        self.cur.execute("""INSERT INTO person (name, passhash, image, disabled) VALUES
-                    (?, ?, ?, ?)
+        self.cur.execute("""INSERT INTO person (name, passhash, image, disabled, vk_id) VALUES
+                    (?, ?, ?, ?, 0)
                     """, (name, password, image, disabled))
         self.cur.execute("""INSERT INTO info (reg_time, last_auth) VALUES
                     (?, ?)""", (str(datetime.datetime.now()), str(datetime.datetime.now())))

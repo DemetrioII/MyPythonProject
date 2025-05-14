@@ -148,28 +148,79 @@
                 font-size: 2rem;
             }
         }
+
+
     </style>
 </head>
 <body>
-    <!-- Фоновые частицы -->
-    <div class="background-particles">
-        <div class="particle" style="top: 20%; left: 10%; width: 20px; height: 20px; animation-duration: 6s;"></div>
-        <div class="particle" style="top: 60%; left: 80%; width: 30px; height: 30px; animation-duration: 10s;"></div>
-        <div class="particle" style="top: 40%; left: 50%; width: 15px; height: 15px; animation-duration: 8s;"></div>
+<!-- Фоновые частицы -->
+<div class="background-particles">
+    <div class="particle" style="top: 20%; left: 10%; width: 20px; height: 20px; animation-duration: 6s;"></div>
+    <div class="particle" style="top: 60%; left: 80%; width: 30px; height: 30px; animation-duration: 10s;"></div>
+    <div class="particle" style="top: 40%; left: 50%; width: 15px; height: 15px; animation-duration: 8s;"></div>
+</div>
+
+<!-- Профиль пользователя -->
+<div class="profile-container">
+    <h1>{{ name }}</h1>
+    <div class="photo-wrapper">
+        <img src="data:image/jpg;base64,{{ photo }}" alt="Фото пользователя">
+    </div>
+    <p class="info">Добро пожаловать в ваш профиль!</p>
+    <p class="timestamp">Зарегистрирован: {{ register_time }}</p>
+
+    <div>
+        <script src="https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js"></script>
+        <script type="text/javascript">
+        if ('VKIDSDK' in window) {
+          const VKID = window.VKIDSDK;
+
+          VKID.Config.init({
+            app: 53519073,
+            redirectUrl: 'https://brown-kiwis-relax.loca.lt',
+            responseMode: VKID.ConfigResponseMode.Callback,
+            source: VKID.ConfigSource.LOWCODE,
+            scope: '', // Заполните нужными доступами по необходимости
+          });
+
+          const floatingOneTap = new VKID.FloatingOneTap();
+
+          floatingOneTap.render({
+            appName: 'Проект по питону',
+            showAlternativeLogin: true
+          })
+          .on(VKID.WidgetEvents.ERROR, vkidOnError)
+          .on(VKID.FloatingOneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
+            const code = payload.code;
+            const deviceId = payload.device_id;
+
+            VKID.Auth.exchangeCode(code, deviceId)
+              .then(vkidOnSuccess)
+              .catch(vkidOnError);
+          });
+
+          function vkidOnSuccess(data) {
+             floatingOneTap.close();  // Закрываем всплывающую форму авторизации
+              alert("Авторизация прошла успешно!");
+              // Или перенаправляем пользователя на личный кабинет
+              // window.location.href = '/dashboard';  // Перенаправляем на внутреннюю страницу
+          }
+
+          function vkidOnError(error) {
+            // Обработка ошибки
+          }
+        }
+
+
+        </script>
     </div>
 
-    <!-- Профиль пользователя -->
-    <div class="profile-container">
-        <h1>{{ name }}</h1>
-        <div class="photo-wrapper">
-            <img src="data:image/jpg;base64,{{ photo }}" alt="Фото пользователя">
-        </div>
-        <p class="info">Добро пожаловать в ваш профиль!</p>
-        <p class="timestamp">Зарегистрирован: {{ register_time }}</p>
-
-        <form method="post" action="/delete_user">
-            <button type="submit" class="delete-button">Удалить профиль</button>
-        </form>
-    </div>
+    <form method="post" action="/user-wall/145613522">
+        <button type="submit" class="get-wall-button">Получить посты бабушки</button>
+    </form>
+    <form method="post" action="/delete_user">
+        <button type="submit" class="delete-button">Удалить профиль</button>
+    </form>
+</div>
 </body>
 </html>

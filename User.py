@@ -38,6 +38,7 @@ class User(BaseModel):
     id: int
     name: Optional[str] = None
     disabled: Optional[bool] = None
+    vk_id: Optional[int] = 0
 
 
 class UserInDB(User):
@@ -58,7 +59,8 @@ def get_user(username: str):
     user_data = db.find_by_name(username)
     if user_data:
         disabled = False
-        return UserInDB(id=user_data[0], name=user_data[1], hashed_password=user_data[2], disabled=disabled)
+        return UserInDB(id=user_data[0], name=user_data[1], hashed_password=user_data[2], disabled=bool(user_data[4]),
+                        vk_id=int(user_data[5]))
     return None
 
 
