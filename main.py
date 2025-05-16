@@ -4,7 +4,7 @@ import datetime
 from requests import *
 
 import matplotlib.pyplot as plt
-import networkx as nx
+# import networkx as nx
 
 from bokeh.plotting import figure
 from bokeh.embed import components
@@ -27,16 +27,13 @@ from User import *
 from src.schemas import *
 from fastapi.middleware.cors import CORSMiddleware
 
-from VK_ID import *
+from VK_helpers import *
 
 VK_APP_ID = "53265566"
-VK_APP_SERVICE = "fea2d7a3fea2d7a3fea2d7a30efd8e133dffea2fea2d7a39947b135431f0ea0ac217ce9"
 BASE_DOMEN = "http://localhost"
 
-VK_APP_ID = os.getenv("VK_APP_ID")
 VK_SERVICE_KEY = "fea2d7a3fea2d7a3fea2d7a30efd8e133dffea2fea2d7a39947b135431f0ea0ac217ce9"
 VK_API_VERSION = "5.199"
-VK_REDIRECTION_URI = "http://localhost/vk-callback"
 
 templates = Jinja2Templates(directory="templates")
 
@@ -46,40 +43,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 tasks = []
 
 db = Database()
-
-
-@app.get("/", response_class=HTMLResponse)
-async def index():
-    """Главная страница с кнопкой авторизации"""
-    html = """
-    <h1>Авторизация через ВКонтакте</h1>
-    <a href="{link}" class="btn btn-primary">
-      Авторизоваться через ВКонтакте
-    </a>
-    """.format(link=f"https://oauth.vk.com/authorize?client_id={CLIENT_ID}&scope=email&redirect_uri={REDIRECT_URI}&response_type=code")
-    return HTMLResponse(content=html)
-
-
-@app.get("/auth/vk/callback", response_class=HTMLResponse)
-async def vk_callback(code: str):
-    """Обработчик Callback URL после авторизации"""
-    # Меняем authorization_code на access_token
-    response = requests.post(
-        "https://oauth.vk.com/access_token",
-        data={
-            "client_id": CLIENT_ID,
-            "client_secret": "XgNXMD3PY0QvjLEMBfYB",  # Ваш секретный ключ
-            "redirect_uri": REDIRECT_URI,
-            "code": code
-        }
-    )
-    token_data = response.json()
-    access_token = token_data["access_token"]
-    vk_user_id = token_data["user_id"]  # VK_ID пользователя
-
-    # Формируем итоговую страницу с результатом
-    result_html = f"<h1>Ваш VK_ID: {vk_user_id}</h1>"
-    return HTMLResponse(content=result_html)
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -205,7 +168,6 @@ async def get_user_wall_info(user_id: int):
     """
     return HTMLResponse(content=html)
 
-    return response
 
 
 @app.get("/register", response_class=HTMLResponse)
@@ -237,8 +199,9 @@ async def get_user_info(user_id: int):
         "user_ids": user_id,
         "v": "5.199"
     }
+    response =
 
-    return get("https://api.vk.com/method/users.get", params=params).json()
+    # return get("https://api.vk.com/method/users.get", params=params).json()
 
 
 async def get_user_friends_info(parameters):
