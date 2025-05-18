@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse
 import requests
 from dotenv import load_dotenv
@@ -17,8 +17,8 @@ async def handle_vk_error(response):
         response = response["response"]
         return response
     except KeyError:
-        try:
-            error = response["error"]
-            raise HTTPException(status_code=400, detail={"error_code": error["error_code"],"error_msg": error["error_msg"]})
-        except KeyError:
-            raise HTTPException(status_code=520, detail="Неизвестная ошибка")
+        error = response["error"]
+        raise HTTPException(status_code=error["error_code"],
+                            detail={"error_msg": error["error_msg"]})
+    except Exception:
+        raise HTTPException(status_code=520, detail="Неизвестная ошибка")
