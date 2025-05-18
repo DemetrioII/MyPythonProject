@@ -224,6 +224,23 @@ async def register_user(
 #
 #     return data
 
+@app.get("/parse-link/", tags=["Общая информация"])
+async def parse(link):
+    name = link.split("/")[-1]
+    if name[:2] == "id":
+        return name[2:]
+    else:
+        # return await get_id(name)
+        params = {
+            "access_token": VK_SERVICE_KEY,
+            "user_ids": name,
+            "v": "5.199",
+        }
+        response = get("https://api.vk.com/method/users.get", params=params).json()
+        # response = await handle_vk_error(response)
+        response = response["response"][0].get("id", 0)
+        return json.dumps(response, ensure_ascii=False)
+
 @app.get("/base-info/{user_id}", tags=["Общая информация"])
 async def get_user_info(user_id: int):
     params = {
