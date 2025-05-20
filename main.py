@@ -1,7 +1,8 @@
 import base64
 import datetime
 import json
-
+import asyncio
+import httpx
 from requests import *
 
 import matplotlib.pyplot as plt
@@ -129,227 +130,106 @@ async def register_user(
 
 # ---- Взаимодействие с VK API
 
-# @app.post("/user-wall/{user_id}")
-# async def get_user_wall(user_id: int):
-#     response = RedirectResponse(url=f"/user-wall/{user_id}", status_code=302)
-#     return response
-#
-#
-# def group_by_date(data) -> dict:
-#     posts_grouped_by_date = dict()
-#
-#     for post in data['response']['items']:
-#         timestamp = post['date']
-#         dt_object = datetime.fromtimestamp(timestamp)
-#
-#         date_string = dt_object.strftime("%d.%m.%Y")
-#         if date_string not in posts_grouped_by_date.keys():
-#             posts_grouped_by_date[date_string] = [post]
-#         else:
-#             posts_grouped_by_date[date_string].append(post)
-#
-#     return posts_grouped_by_date
+@app.get("/full-profile", tags=["Агрегированный профиль"])
+async def get_full_profile(link: str):
+    user_id = int(await parse(link))
+    url = "https://api.vk.com/method/"
+    token = VK_SERVICE_KEY
+    version = "5.199"
+    async with httpx.AsyncClient() as client:
+        base_info = client.get(f"{url}users.get", params={
+            "access_token": token,
+            "user_ids": user_id,
+            "v": version,
+            "fields": "bdate, sex, city, relation, last_seen"
+        })
 
-# @app.get("/user-wall/{user_id}", tags=["Стена"], response_class=HTMLResponse)
-# async def get_user_wall_info(user_id: int):
-#     params = {
-#         "access_token": VK_SERVICE_KEY,
-#         "domain": user_id,
-#         "v":"5.199",
-#         "extended": 1
-#     }
-#     response = get("https://api.vk.com/method/wall.get", params=params).json()
-#     response = group_by_date(response)
-#
-#     dates = list(response.keys())
-#     counts = [len(response[d]) for d in dates]
-#
-#     # Создаем график с помощью Bokeh
-#     p = figure(x_range=dates, width=1000, height=350, title="Количество постов по дням")
-#     p.vbar(x=dates, top=counts, width=0.9)
-#     p.xaxis.axis_label = "Даты"
-#     p.yaxis.axis_label = "Количество постов"
-#
-#     # Генерируем компоненты для вставки в HTML
-#     script, div = components(p)
-#     html = f"""
-#     <!DOCTYPE html>
-#     <html lang="en">
-#     <head>
-#         <meta charset="UTF-8">
-#         <title>Диаграмма постов по дням</title>
-#         <!-- Загружаем ресурсы Bokeh -->
-#         {CDN.render()}
-#     </head>
-#     <body>
-#         <h1>График количества постов по дням</h1>
-#         {div}
-#         {script}
-#     </body>
-#     </html>
-#     """
-#     return HTMLResponse(content=html)
+        groups = client.get(f"{url}groups.get", params={
+            "access_token": token,
+            "user_id": user_id,
+            "v": version,
+            "extended": 1,
+            "fields": "activity, age_limits"
+        })
 
-# @app.get("/user-friends/{user_id}")
-# async def get_user_info(user_id: int) -> dict:
-#     friends_params = {
-#         "access_token": VK_SERVICE_KEY,
-#         "user_id": user_id,
-#         "v": "5.199",
-#         # "count": 10 # временный параметр
-#     }
-#
-#     friends_ids = get("https://api.vk.com/method/friends.get", params=friends_params).json()
-#
-#     print(friends_ids)
-#     data = dict()
-#     for id in friends_ids["response"]["items"]:
-#         user_params = {
-#             "access_token": VK_SERVICE_KEY,
-#             "user_ids": id,
-#             "v": "5.199",
-#         }
-#         user_info = get("https://api.vk.com/method/users.get", params=user_params).json()
-#         time.sleep(0.3)
-#
-#         # tmp_user_info = user_info["response"][0]
-#         # del tmp_user_info["id"]
-#         # del tmp_user_info["can_access_closed"]
-#         # del tmp_user_info["is_closed"]
-#
-#         tmp_user_info = user_info["response"][0]
-#         data[id] = {"first_name": tmp_user_info["first_name"], "last_name": tmp_user_info["last_name"]}
-#         # data[id] = tmp_user_info
-#         get_friend_graph(user_id)
-#
-#     return data
+        wall = client.get(f"{url}wall.get", params={
+            "access_token": token,
+            "domain": user_id,
+            "v": version
+        })
 
-@app.get("/parse-link/", tags=["Общая информация"])
-async def parse(link):
-    name = link.split("/")[-1]
-    if name[:2] == "id":
-        return name[2:]
-    else:
-        # return await get_id(name)
-        params = {
-            "access_token": VK_SERVICE_KEY,
-            "user_ids": name,
-            "v": "5.199",
+        friends = client.get(f"{url}friends.get", params={
+            "access_token": token,
+            "user_id": user_id,
+            "v": version,
+            "fields": "sex,city"
+        })
+
+        followers = client.get(f"{url}users.getFollowers", params={
+            "access_token": token,
+            "user_id": user_id,
+            "v": version,
+            "fields": "sex,city"
+        })
+
+        responses = await asyncio.gather(base_info, groups, wall, friends, followers)
+
+        data = {
+            "base_info": responses[0].json().get("response", {}),
+            "groups": responses[1].json().get("response", {}),
+            "wall": responses[2].json().get("response", {}),
+            "friends": responses[3].json().get("response", {}),
+            "followers": responses[4].json().get("response", {})
         }
-        response = get("https://api.vk.com/method/users.get", params=params).json()
-        # response = await handle_vk_error(response)
-        response = response["response"][0].get("id", 0)
-        return json.dumps(response, ensure_ascii=False)
 
-@app.get("/base-info/{user_id}", tags=["Общая информация"])
-async def get_user_info(user_id: int):
-    params = {
-        "access_token": VK_SERVICE_KEY,
-        "user_ids": user_id,
-        "v": "5.199",
-        "fields": "deactivated, bdate, sex, city, quotes, relation, last_seen"
-    }
-    response = get("https://api.vk.com/method/users.get", params=params).json()
-    # response = await handle_vk_error(response)
-    return json.dumps(response, ensure_ascii=False)
+        for info, answer in data.items():
+            if info == "base_info":
+                data[info] = answer[0]
+            if info == "groups":
+                fields_to_keep = {'is_closed', 'deactivated', 'activity', 'age_limits', 'ban_info', 'is_favorite'}
+                value_to_age = {1: 0, 2: 16, 3: 18}
+                for item in data[info]['items']:
+                    keys = list(item.keys())
+                    for key in keys:
+                        if key not in fields_to_keep:
+                            del item[key]
+                        if key == "age_limits":
+                            item[key] = value_to_age.get(item[key], item[key])
+            if info == "wall":
+                if "reaction_sets" in answer:
+                    del data[info]["reaction_sets"]
 
-@app.get("/groups/{user_id}", tags=["Группы"])
-async def get_groups_info(user_id: int):
-    params = {
-        "access_token": VK_SERVICE_KEY,
-        "user_id": user_id,
-        "v": "5.199",
-        "extended": "1",
-        # "count": "3",
-        "fields": "is_closed, deactivated, activity, age_limits, ban_info, is_favorite"
-    }
-    response = get("https://api.vk.com/method/groups.get", params=params).json()
-    # response = await handle_vk_error(response)
-    fields_to_keep = {'is_closed', 'deactivated', 'activity', 'age_limits', 'ban_info', 'is_favorite'}
-    value_to_age = {1: 0, 2: 16, 3: 18}
-    if 'response' in response and 'items' in response['response']:
-        for item in response['response']['items']:
-            keys = list(item.keys())
-            for key in keys:
-                if key not in fields_to_keep:
-                    del item[key]
-                if key == "age_limits":
-                    item[key] = value_to_age[item[key]]
+                fields_to_keep = {'marked_as_ads', 'date', 'from_id', 'id', 'reactions', 'owner_id', 'views'}
+                for item in data[info]['items']:
+                    keys = list(item.keys())
+                    for key in keys:
+                        if key not in fields_to_keep:
+                            del item[key]
+                        if key == "views":
+                            item[key] = item["views"].get("count")
+                        if key == "reactions":
+                            item[key] = item["reactions"].get("count")
 
-    response = await handle_vk_error(response)
-    return json.dumps(response, ensure_ascii=False)
-
-@app.get("/wall/{user_id}", tags=["Стена"])
-async def get_user_wall_info(user_id: int):
-    params = {
-        "access_token": VK_SERVICE_KEY,
-        "domain": user_id,
-        "v":"5.199",
-        "extended": 0
-    }
-    response = get("https://api.vk.com/method/wall.get", params=params).json()
-    # response = await handle_vk_error(response)
-
-    fields_to_keep = {'marked_as_ads', 'date', 'from_id', 'id', 'reactions', 'owner_id', 'views'}
-    del response["response"]["reaction_sets"]
-    if 'response' in response and 'items' in response['response']:
-        for item in response['response']['items']:
-            keys = list(item.keys())
-            for key in keys:
-                if key not in fields_to_keep:
-                    del item[key]
-                if key == "views":
-                    item["views"] = item["views"].get("count")
-                if key == "reactions":
-                    item["reactions"] = item["reactions"].get("count")
-    return json.dumps(response, ensure_ascii=False)
-
-@app.get("/friends/{user_id}", tags=["Друзья/подписчики"])
-async def get_user_friends(user_id: int):
-
-    friends_params = {
-        "access_token": VK_SERVICE_KEY,
-        "user_id": user_id,
-        "v": "5.199",
-        "fields": "sex, city"
-    }
-
-    response = get("https://api.vk.com/method/friends.get", params=friends_params).json()
-    # response = await handle_vk_error(response)
-    fields_to_keep = {'id', 'deactivated', 'sex', 'first_name', 'last_name', 'can_access_closed', 'is_closed'}
-    value_to_age = {1: 0, 2: 16, 3: 18}
-    if 'response' in response and 'items' in response['response']:
-        for item in response['response']['items']:
-            keys = list(item.keys())
-            for key in keys:
-                if key not in fields_to_keep:
-                    del item[key]
-                if key == "age_limits":
-                    item[key] = value_to_age[item[key]]
-
-    return json.dumps(response, ensure_ascii=False)
-
-@app.get("/followers/{user_id}", tags=["Друзья/подписчики"])
-async def get_users_followers(user_id: int):
-    friends_params = {
-        "access_token": VK_SERVICE_KEY,
-        "user_id": user_id,
-        "v": "5.199",
-        "fields": "sex, city",
-    }
-    response = get("https://api.vk.com/method/users.getFollowers", params=friends_params).json()
-    # response = await handle_vk_error(response)
-    fields_to_keep = {'id', 'deactivated', 'sex', 'first_name', 'last_name', 'can_access_closed', 'is_closed'}
-    value_to_age = {1: 0, 2: 16, 3: 18}
-    if 'response' in response and 'items' in response['response']:
-        for item in response['response']['items']:
-            keys = list(item.keys())
-            for key in keys:
-                if key not in fields_to_keep:
-                    del item[key]
-                if key == "age_limits":
-                    item[key] = value_to_age[item[key]]
-    return json.dumps(response, ensure_ascii=False)
+            if info == "friends":
+                fields_to_keep = {'id', 'deactivated', 'sex', 'first_name', 'last_name', 'can_access_closed',
+                                  'is_closed', 'city'}
+                for item in data[info]['items']:
+                    keys = list(item.keys())
+                    for key in keys:
+                        if key not in fields_to_keep:
+                            del item[key]
+            try:
+                if info == "followers":
+                    fields_to_keep = {'id', 'deactivated', 'sex', 'first_name', 'last_name', 'can_access_closed',
+                                      'is_closed', 'city'}
+                    for item in data[info]['items']:
+                        keys = list(item.keys())
+                        for key in keys:
+                            if key not in fields_to_keep:
+                                del item[key]
+            except Exception:
+                raise HTTPException(status_code=400)
+        return json.dumps(data)
 
 def get_friend_graph(user_id: int):
     G = nx.DiGraph()
