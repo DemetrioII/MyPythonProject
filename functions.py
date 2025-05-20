@@ -26,18 +26,21 @@ async def handle_vk_error(response):
 
 
 async def parse(link: str):
-    name = link.split("/")[-1]
-    if name[:2] == "id":
-        return name[2:]
-    else:
-        params = {
-            "access_token": VK_SERVICE_KEY,
-            "user_ids": name,
-            "v": "5.199",
-        }
-        async with httpx.AsyncClient() as client:
-            response = await client.get("https://api.vk.com/method/users.get", params=params)
-        data = response.json()
-        # data = await handle_vk_error(data)
-        user_id = data["response"][0].get("id", 0)
-        return json.dumps(user_id, ensure_ascii=False)
+    try:
+        name = link.split("/")[-1]
+        if name[:2] == "id":
+            return name[2:]
+        else:
+            params = {
+                "access_token": VK_SERVICE_KEY,
+                "user_ids": name,
+                "v": "5.199",
+            }
+            async with httpx.AsyncClient() as client:
+                response = await client.get("https://api.vk.com/method/users.get", params=params)
+            data = response.json()
+            # data = await handle_vk_error(data)
+            user_id = data["response"][0].get("id", 0)
+            return json.dumps(user_id, ensure_ascii=False)
+    except:
+        raise HTTPException(status_code=400, detail="Неверный формат ссылки")
