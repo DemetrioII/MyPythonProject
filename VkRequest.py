@@ -117,3 +117,94 @@ async def get_full_profile(link: str):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error processing profile data: {str(e)}")
 
+
+@app.get("/metrics", tags=["Расчет метрик"])
+async def get_metrics():
+    metrics = dict()
+    # Тут должно быть подключение к базе данных
+    with open("data.json", "r", encoding="UTF-8") as f:
+        raw_data = json.load(f)
+    data = json.loads(raw_data)
+    for key, info in data.items():
+        if key == "base_info":
+            relationship_status = {
+                0: "не указано",
+                1: "не женат/не замужем",
+                2: "есть друг/есть подруга",
+                3: "помолвлен/помолвлена",
+                4: "женат/замужем",
+                5: "всё сложно",
+                6: "в активном поиске",
+                7: "влюблён/влюблена",
+                8: "в гражданском браке"
+            }
+            sex_status = {
+                1: "Ж",
+                2: "М"
+            }
+            metrics[key] = info.copy()
+            try:
+                metrics[key]["relation"] = relationship_status[metrics[key]["relation"]]
+            except KeyError:
+                pass
+            try:
+                metrics[key]["sex"] = sex_status[metrics[key]["sex"]]
+            except KeyError:
+                pass
+
+        elif key == "groups":
+            metrics[key] = dict()
+            metrics[key]["count"] = info.get("count", 0)
+            items = info.get("items", [])
+            for item in items:
+                for tag, value in item.items():
+                    if tag not in metrics[key].keys():
+                        metrics[key][tag] = dict()
+                    metrics[key][tag][value] = metrics[key][tag].get(value, 0) + 1
+
+        elif key == "wall":
+            metrics[key] = dict()
+            items = info.get("items", [])
+
+            metrics[key]["last_post"] = items[0].get("date", 0) if items else 0
+            total_reactions = sum(item.get('reactions', 0) for item in items)
+            total_views = sum(item.get('views', 0) for item in items)
+            metrics[key]["social_activity"] = (total_reactions / total_views) * 100 if total_views else 0
+            marked_ads = sum(item.get('marked_as_ads', 0) for item in items)
+            post_count = info.get("count", 0)
+            metrics[key]["post_count"] = post_count
+            metrics[key]["ads_to_posts"] = marked_ads / post_count if post_count else 0
+
+        elif key == "friends":
+            metrics[key] = dict()
+            items = info.get("items", [])
+            allow_tags = {"city", "sex"}
+            for item in items:
+                for tag, value in item.items():
+                    if tag in allow_tags:
+                        if tag not in metrics[key].keys():
+                            metrics[key][tag] = dict()
+                        if tag == "city":
+                            metrics[key][tag][value.get("title", "Unknown")] = metrics[key][tag].get(
+                                value.get("title", "Unknown"), 0) + 1
+                        elif tag == "sex":
+                            metrics[key][tag][value] = metrics[key][tag].get(value, 0) + 1
+        elif key == "followers":
+            metrics[key] = dict()
+            items = info.get("items", [])
+            allow_tags = {"city", "sex"}
+            for item in items:
+                for tag, value in item.items():
+                    if tag in allow_tags:
+                        if tag not in metrics[key].keys():
+                            metrics[key][tag] = dict()
+                        if tag == "city":
+                            metrics[key][tag][value.get("title", "Unknown")] = metrics[key][tag].get(
+                                value.get("title", "Unknown"), 0) + 1
+                        elif tag == "sex":
+                            metrics[key][tag][value] = metrics[key][tag].get(value, 0) + 1
+        else:
+            metrics[key] = dict()
+        print(key, info)
+
+    return metrics

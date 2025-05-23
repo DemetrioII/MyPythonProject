@@ -24,7 +24,6 @@ async def handle_vk_error(response):
     except Exception:
         raise HTTPException(status_code=520, detail="Неизвестная ошибка")
 
-
 async def parse(link: str):
     try:
         name = link.split("/")[-1]
