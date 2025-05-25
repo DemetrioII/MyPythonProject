@@ -21,6 +21,12 @@ class Database:
                         "last_auth" DATETIME,
                         PRIMARY KEY ("id" AUTOINCREMENT)
                         );""")
+        self.cur.execute("""CREATE TABLE IF NOT EXISTS "jsons" (
+                        "request_id" INTEGER NOT NULL,
+                        "request" TEXT NOT NULL,
+                        "user_id" INTEGER NOT NULL,
+                        PRIMARY KEY ("request_id" AUTOINCREMENT)
+                        );""")
         self.con.commit()
 
     def create_person(self, name, password, image, disabled):
@@ -43,6 +49,10 @@ class Database:
             return fid
             get_response = self.__get_by_id(int(fid))
             return get_response
+
+    def add_request(self, request: str, current_user_id: int):
+        self.cur.execute("""INSERT INTO jsons (request, user_id) VALUES (?, ?)""", (request, str(current_user_id)))
+        self.con.commit()
 
     def delete_by_name(self, name: str):
         try:

@@ -31,7 +31,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from functions import *
 from functions import *
 
-
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
@@ -63,6 +62,7 @@ async def refresh_token(old_token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
+
 # ---- Работа с аккаунтами в приложении
 @app.post("/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -93,6 +93,7 @@ async def profile_page(request: Request, current_user: User = Depends(get_curren
         {"request": request, "name": current_user.name, "photo": db.find_by_name(current_user.name)[3]}
     )
 
+
 @app.post("/delete_user")
 async def delete_user(request: Request, current_user: User = Depends(get_current_active_user)):
     db.delete_by_name(current_user.name)
@@ -101,9 +102,130 @@ async def delete_user(request: Request, current_user: User = Depends(get_current
     response.delete_cookie(key="access_token")  # Точное имя куки
     return response
 
+
 @app.get("/register", response_class=HTMLResponse)
 async def get_register_form(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
+
+
+@app.get("/user-base-info/{user_id}", tags=["Остальное"])
+async def get_user_info(user_id: int):  # handle_errors: callable = Depends(handle_vk_error)
+
+    params = {
+        "access_token": VK_SERVICE_KEY,
+        "user_ids": user_id,
+        "v": "5.199"
+    }
+    response = get("https://api.vk.com/method/users.get", params=params).json()
+    db.add_request(str(response), user_id)
+    return response
+
+
+@app.get("/user-friends/{user_id}", tags=["Друзья/подписчики"])
+async def get_user_friends(user_id: int):
+    friends_params = {
+        "access_token": VK_SERVICE_KEY,
+        "user_id": user_id,
+        "v": "5.199",
+    }
+    response = get("https://api.vk.com/method/friends.get", params=friends_params).json()
+    try:
+        friends_ids = response["response"]
+    except KeyError:
+        try:
+            error = response["error"]
+            return {"error_code": error["error_code"], "error_msg": error["error_msg"]}
+        except KeyError:
+            return HTTPException(status_code=520, detail="Неизвестная ошибка")
+    data = dict()
+    for id in friends_ids["items"]:
+        user_params = {
+            "access_token": VK_SERVICE_KEY,
+            "user_ids": id,
+            "v": "5.199",
+        }
+        user_info = get("https://api.vk.com/method/users.get", params=user_params).json()
+        time.sleep(0.2)
+        tmp_user_info = user_info["response"][0]
+        data[id] = {"first_name": tmp_user_info["first_name"], "last_name": tmp_user_info["last_name"]}
+
+    return data
+
+
+@app.get("/user-followers/{user_id}", tags=["Друзья/подписчики"])
+async def get_users_followers(user_id: int):
+    followers_params = {
+        "access_token": VK_SERVICE_KEY,
+        "user_id": user_id,
+        "v": "5.199",
+    }
+    response = get("https://api.vk.com/method/users.getFollowers", params=followers_params).json()
+    try:
+        friends_ids = response["response"]
+    except KeyError:
+        try:
+            error = response["error"]
+            return {"error_code": error["error_code"], "error_msg": error["error_msg"]}
+        except KeyError:
+            return HTTPException(status_code=520, detail="Неизвестная ошибка")
+    data = dict()
+
+    for id in friends_ids["items"]:
+        user_params = {
+            "access_token": VK_SERVICE_KEY,
+            "user_ids": id,
+            "v": "5.199",
+        }
+        user_info = get("https://api.vk.com/method/users.get", params=user_params).json()
+        time.sleep(0.2)
+        tmp_user_info = user_info["response"][0]
+        data[id] = {"first_name": tmp_user_info["first_name"], "last_name": tmp_user_info["last_name"]}
+
+    return data
+
+
+@app.get("/user-subscriptions/{user_id}", tags=["Друзья/подписчики"])
+async def get_users_followers(user_id: int):
+    subscriptions_params = {
+        "access_token": VK_SERVICE_KEY,
+        "user_id": user_id,
+        "v": "5.199",
+    }
+    response = get("https://api.vk.com/method/users.getSubscriptions", params=subscriptions_params).json()
+    try:
+        friends_ids = response["response"]
+    except KeyError:
+        try:
+            error = response["error"]
+            return {"error_code": error["error_code"], "error_msg": error["error_msg"]}
+        except KeyError:
+            return HTTPException(status_code=520, detail="Неизвестная ошибка")
+    data = dict()
+
+    for id in friends_ids["items"]:
+        user_params = {
+            "access_token": VK_SERVICE_KEY,
+            "user_ids": id,
+            "v": "5.199",
+        }
+        user_info = get("https://api.vk.com/method/users.get", params=user_params).json()
+        time.sleep(0.2)
+        tmp_user_info = user_info["response"][0]
+        data[id] = {"first_name": tmp_user_info["first_name"], "last_name": tmp_user_info["last_name"]}
+
+    return data
+
+
+@app.get("/user-wall/{user_id}", tags=["Стена"])
+async def get_user_wall_info(user_id: int):
+    params = {
+        "access_token": VK_SERVICE_KEY,
+        "domain": user_id,
+        "v": "5.199",
+        "extended": 1
+    }
+    response = get("https://api.vk.com/method/wall.get", params=params).json()
+    return response
 
 
 @app.post("/register")
@@ -121,6 +243,7 @@ async def register_user(
     hashed_password = get_password_hash(password)
     db.create_person(username, hashed_password, avatar, False)
     return {"message": "User created successfully"}
+
 
 # ---- Взаимодействие с VK API
 def get_friend_graph(user_id: int):

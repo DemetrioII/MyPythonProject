@@ -177,7 +177,7 @@
 
           VKID.Config.init({
             app: 53519073,
-            redirectUrl: 'https://brown-kiwis-relax.loca.lt',
+            redirectUrl: 'https://shaggy-beans-brake.loca.lt/',
             responseMode: VKID.ConfigResponseMode.Callback,
             source: VKID.ConfigSource.LOWCODE,
             scope: '', // Заполните нужными доступами по необходимости
@@ -201,7 +201,7 @@
 
           function vkidOnSuccess(data) {
              floatingOneTap.close();  // Закрываем всплывающую форму авторизации
-              alert("Авторизация прошла успешно!");
+              alert("Авторизация прошла успешно!" + JSON.stringify(data));
               // Или перенаправляем пользователя на личный кабинет
               // window.location.href = '/dashboard';  // Перенаправляем на внутреннюю страницу
           }
