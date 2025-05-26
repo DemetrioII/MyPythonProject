@@ -1,0 +1,8 @@
+fastapi[standard]
+requests
+httpx
+uvicorn
+pydantic
+dotenv
+langchain-gigachat
+langchain_core
