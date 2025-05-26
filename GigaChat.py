@@ -1,45 +1,46 @@
+from langchain_gigachat.chat_models import GigaChat
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.output_parsers import StrOutputParser
 import os
-import json
 from dotenv import load_dotenv
-import requests
+from fastapi import FastAPI
 
-# Загружаем токен из .env файла
+parser = StrOutputParser()
+
+app = FastAPI()
+
+
 load_dotenv()
 TOKEN = os.getenv('GIGA-TOKEN')
 
-
-class GigaChat:
-    def __init__(self):
-        self.base_url = 'https://api.giga.chat/v1/'
-        self.headers = {
-            'Authorization': f'Bearer {TOKEN}',
-            'Content-Type': 'application/json',
-        }
-
-    # Метод для отправки сообщений
-    def send_message(self, message_text):
-        payload = {
-            'message': message_text,
-        }
-
-        response = requests.post(
-            f'{self.base_url}/messages',
-            headers=self.headers,
-            data=json.dumps(payload)
-        )
-
-        if response.status_code == 200:
-            return response.json()['response']
-        else:
-            print(f"Ошибка: {response.text}")
-            return None
+model = GigaChat(
+    credentials=TOKEN,
+    scope="GIGACHAT_API_PERS",
+    model="GigaChat",
+    verify_ssl_certs=False,
+)
 
 
-def test():
-    chatbot = GigaChat()
-    while True:
-        user_input = input("\nВведите сообщение (или введите 'exit', чтобы выйти): ")
-        if user_input.lower() == 'exit':
-            break
-        answer = chatbot.send_message(user_input)
-        print("Ответ:", answer)
+@app.get("/gigachat", tags = ["Анализ через LLM"])
+async def get_llm_analysis():
+    # Подгрузка промпта
+    with open("prompt.txt", "r", encoding="UTF-8") as f :
+        system_message = f.read()
+    # Тут лолжна быть подгрузка json из бд
+    with open("parced_data.json", "r", encoding="UTF-8") as f:
+        data = f.read()
+
+    messages = [
+        SystemMessage(content=system_message),
+        HumanMessage(content=data),
+    ]
+
+    result = model.invoke(messages)
+
+    # Должно загружаться в бд
+    summary = parser.invoke(result)
+    return summary
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("GigaChat:app", host="127.0.0.1", port=5173, reload=True)
