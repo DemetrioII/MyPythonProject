@@ -123,25 +123,4 @@ async def register_user(
     db.create_person(username, hashed_password, avatar, False)
     return {"message": "User created successfully"}
 
-
-# ---- Взаимодействие с VK API
-def get_friend_graph(user_id: int):
-    G = nx.DiGraph()
-    friends_params = {
-        "access_token": VK_SERVICE_KEY,
-        "user_id": user_id,
-        "v": "5.199",
-        # "count": 10 # временный параметр
-    }
-    friends_ids = get("https://api.vk.com/method/friends.get", params=friends_params).json()["response"]["items"]
-    nodes = friends_ids
-    G.add_nodes_from(nodes)
-    edges = [(user_id, i) for i in nodes]
-    G.add_edges_from(edges)
-
-    pos = nx.spring_layout(G)
-    nx.draw(G, pos, with_labels=True, node_color='lightblue', arrowsize=20, node_size=700, font_size=15)
-    # plt.title("Визуализация ориентированного графа")
-    plt.show()
-
 # db.close()
