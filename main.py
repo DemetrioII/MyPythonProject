@@ -2,7 +2,10 @@ import base64
 import datetime
 import json
 import asyncio
+from collections import Counter
+import plotly.express as px
 import httpx
+import pandas as pd
 from requests import *
 
 import matplotlib.pyplot as plt
@@ -19,6 +22,7 @@ from typing import Optional
 from jose import JWTError, jwt
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi import Query
 from fastapi.staticfiles import StaticFiles
 from DataBase import Database
 from passlib.context import CryptContext
@@ -217,15 +221,51 @@ async def get_users_followers(user_id: int):
 
 
 @app.get("/user-wall/{user_id}", tags=["Стена"])
-async def get_user_wall_info(user_id: int):
+async def get_user_wall_info(request: Request,
+                             user_id: int,
+                             color: str = Query("Пол", description="Цветовая категория (например Пол, Город)"),
+                             chart_type: str = Query("bar", regex="^(bar|pie)$",
+                                                     description="Тип графика: bar или pie"),
+                             theme: str = Query("plotly", description="Тема оформления")
+                             ):
     params = {
         "access_token": VK_SERVICE_KEY,
         "domain": user_id,
         "v": "5.199",
         "extended": 1
     }
+
     response = get("https://api.vk.com/method/wall.get", params=params).json()
-    return response
+    try:
+        posts = response["response"]["items"]
+    except Exception as e:
+        return f"""{e}"""
+
+    months = []
+    for post in posts:
+        dt = datetime.utcfromtimestamp(post["date"])
+        months.append(dt.strftime("%Y-%m"))
+
+    month_count = dict(Counter(months))
+    df = pd.DataFrame(
+        {"Месяц": month_count.keys(),
+         "Количество записей": month_count.values()}
+    )
+
+    if chart_type == "bar":
+        fig = px.bar(df, x="Месяц", y="Количество записей", title="Активность пользователя")
+    else:
+        fig = px.pie(df, names="Месяц", values="Количество записей", title="Активность пользователя")
+    graph_html = fig.to_html(full_html=False)
+
+    return templates.TemplateResponse("Graphics.html", {
+        "request": request,
+        "graph_html": graph_html,
+        "color": color,
+        "chart_type": chart_type,
+        "theme": theme,
+        "user_id": user_id
+    })
 
 
 @app.post("/register")

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Визуализация профиля {{ user_id }}</title>
+</head>
+<body>
+<h2>График: распределение друзей</h2>
+
+<form method="get" style="margin-bottom: 20px;">
+    <label>Цвет по:
+        <select name="color" onchange="this.form.submit()">
+            <option value="Пол" {% if color== 'Пол' %} selected {% endif %}>Пол</option>
+            <option value="Город" {% if color== 'Город' %} selected {% endif %}>Город</option>
+        </select>
+    </label>
+
+    <label>Тип графика:
+        <select name="chart_type" onchange="this.form.submit()">
+            <option value="bar" {% if chart_type== 'bar' %}selected{% endif %}>Столбчатый</option>
+            <option value="pie" {% if chart_type== 'pie' %}selected{% endif %}>Круговой</option>
+        </select>
+    </label>
+
+    <label>Тема:
+        <select name="theme" onchange="this.form.submit()">
+            <option value="plotly" {% if theme== 'plotly' %}selected{% endif %}>Plotly</option>
+            <option value="plotly_dark" {% if theme== 'plotly_dark' %}selected{% endif %}>Тёмная</option>
+            <option value="ggplot2" {% if theme== 'ggplot2' %}selected{% endif %}>ggplot2</option>
+            <option value="seaborn" {% if theme== 'seaborn' %}selected{% endif %}>Seaborn</option>
+        </select>
+    </label>
+</form>
+
+{{ graph_html|safe }}
+</body>
+</html>
