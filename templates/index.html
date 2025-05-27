@@ -10,6 +10,23 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+        .graphics-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s ease, transform 0.2s ease;
+            display: inline-block;
+}
+
+.graphics-button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #764ba2, #667eea);
+}
 
         body {
             min-height: 100vh;
@@ -210,6 +227,9 @@
             <input id="password" name="password" type="password" required/>
         </div>
         <input class="submit-btn" content="Done" type="submit">
+    </form>
+    <form method="post" action="/Graphics.html">
+        <button type="submit" class="graphics-button">Перейти к графикам</button>
     </form>
 </body>
 </html>
