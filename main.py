@@ -133,6 +133,7 @@ async def get_user_friends(user_id: int):
         "v": "5.199",
     }
     response = get("https://api.vk.com/method/friends.get", params=friends_params).json()
+    db.add_request(str(response), user_id)
     try:
         friends_ids = response["response"]
     except KeyError:
@@ -164,6 +165,7 @@ async def get_users_followers(user_id: int):
         "v": "5.199",
     }
     response = get("https://api.vk.com/method/users.getFollowers", params=followers_params).json()
+    db.add_request(str(response), user_id)
     try:
         friends_ids = response["response"]
     except KeyError:
@@ -236,6 +238,7 @@ async def get_user_wall_info(request: Request,
     }
 
     response = get("https://api.vk.com/method/wall.get", params=params).json()
+    db.add_request(str(response), user_id)
     try:
         posts = response["response"]["items"]
     except Exception as e:
