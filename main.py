@@ -223,7 +223,7 @@ async def get_users_followers(user_id: int):
 @app.get("/user-wall/{user_id}", tags=["Стена"])
 async def get_user_wall_info(request: Request,
                              user_id: int,
-                             color: str = Query("Пол", description="Цветовая категория (например Пол, Город)"),
+                             color: str = Query("Год", description="Цветовая категория", enum=["Год", "Месяц"]),
                              chart_type: str = Query("bar", regex="^(bar|pie)$",
                                                      description="Тип графика: bar или pie"),
                              theme: str = Query("plotly", description="Тема оформления")
@@ -247,15 +247,37 @@ async def get_user_wall_info(request: Request,
         months.append(dt.strftime("%Y-%m"))
 
     month_count = dict(Counter(months))
-    df = pd.DataFrame(
+    df_month = pd.DataFrame(
         {"Месяц": month_count.keys(),
          "Количество записей": month_count.values()}
     )
 
+    # Добавляем год для цвета
+    df_month["Год"] = df_month["Месяц"].str[:4]
+
+    # Выбираем, как раскрашивать
+    color_column = color if color in ["Год", "Месяц"] else "Год"
+
+    # Построение графика
     if chart_type == "bar":
-        fig = px.bar(df, x="Месяц", y="Количество записей", title="Активность пользователя")
+        fig = px.bar(
+            df_month,
+            x="Месяц",
+            y="Количество записей",
+            color=color_column,
+            title="Активность пользователя по месяцам",
+            template=theme
+        )
     else:
-        fig = px.pie(df, names="Месяц", values="Количество записей", title="Активность пользователя")
+        fig = px.pie(
+            df_month,
+            names="Месяц",
+            values="Количество записей",
+            color=color_column,
+            title="Активность пользователя по месяцам",
+            template=theme
+        )
+
     graph_html = fig.to_html(full_html=False)
 
     return templates.TemplateResponse("Graphics.html", {
