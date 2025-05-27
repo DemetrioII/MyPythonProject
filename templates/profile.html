@@ -11,6 +11,23 @@
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
         }
+        .graphics-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s ease, transform 0.2s ease;
+            display: inline-block;
+}
+
+        .graphics-button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+}
 
         body {
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -220,6 +237,9 @@
     </form>
     <form method="post" action="/delete_user">
         <button type="submit" class="delete-button">Удалить профиль</button>
+    </form>
+    <form method="post" action="/Graphics.html">
+        <button type="submit" class="graphics-button">Перейти к графикам</button>
     </form>
 </div>
 </body>
