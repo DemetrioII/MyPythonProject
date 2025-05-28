@@ -11,6 +11,8 @@ from requests import *
 import matplotlib.pyplot as plt
 import networkx as nx
 
+from GigaChat import *
+
 from bokeh.plotting import figure
 from bokeh.embed import components
 from bokeh.resources import CDN
@@ -353,6 +355,35 @@ async def get_full_profile(user_id: int,
             raise HTTPException(status_code=500, detail=f"Error processing profile data: {str(e)}")
 
 
+parser = StrOutputParser()
+model = GigaChat(
+    credentials=os.getenv('GIGA-TOKEN'),
+    scope="GIGACHAT_API_PERS",
+    model="GigaChat",
+    verify_ssl_certs=False,
+)
+
+
+@app.get("/gigachat", tags=["Анализ через LLM"])
+async def get_llm_analysis():
+    # Подгрузка промпта
+    with open("prompt.txt", "r", encoding="UTF-8") as f:
+        system_message = f.read()
+    with open("data.json", "r", encoding="UTF-8") as f:
+        data = f.read()
+        data = str(json.loads(data)['base_info'])
+
+    messages = [
+        SystemMessage(content=system_message),
+        HumanMessage(content=data),
+    ]
+
+    result = model.invoke(messages)
+
+    summary = parser.invoke(result)
+    return summary
+
+
 @app.get("/", response_class=HTMLResponse)
 async def get_base_page(request: Request):
     return templates.TemplateResponse("BasePage.html", {"request": request})
@@ -400,7 +431,12 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         httponly=True,  # Только сервер может читать эту куку
         samesite="lax"  # или strict, зависит от твоей архитектуры
     )
-    return response
+    return RedirectResponse(url=f"/profile", status_code=303)
+
+
+@app.get("/success-login")
+async def success_login(request: Request):
+    return templates.TemplateResponse("successfull_register.html", {"request": request})
 
 
 @app.get("/profile", response_class=HTMLResponse)
@@ -439,6 +475,6 @@ async def register_user(
 
     hashed_password = get_password_hash(password)
     db.create_person(username, hashed_password, avatar, False)
-    return {"message": "User created successfully"}
+    return RedirectResponse(url=f"/success-login", status_code=303)
 
 # db.close()
