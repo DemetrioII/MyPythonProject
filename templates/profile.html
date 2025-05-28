@@ -184,56 +184,12 @@
         <img src="data:image/jpg;base64,{{ photo }}" alt="Фото пользователя">
     </div>
     <p class="info">Добро пожаловать в ваш профиль!</p>
-    <p class="timestamp">Зарегистрирован: {{ register_time }}</p>
-
-    <div>
-        <script src="https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js"></script>
-        <script type="text/javascript">
-        if ('VKIDSDK' in window) {
-          const VKID = window.VKIDSDK;
-
-          VKID.Config.init({
-            app: 53519073,
-            redirectUrl: 'https://shaggy-beans-brake.loca.lt/',
-            responseMode: VKID.ConfigResponseMode.Callback,
-            source: VKID.ConfigSource.LOWCODE,
-            scope: '', // Заполните нужными доступами по необходимости
-          });
-
-          const floatingOneTap = new VKID.FloatingOneTap();
-
-          floatingOneTap.render({
-            appName: 'Проект по питону',
-            showAlternativeLogin: true
-          })
-          .on(VKID.WidgetEvents.ERROR, vkidOnError)
-          .on(VKID.FloatingOneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
-            const code = payload.code;
-            const deviceId = payload.device_id;
-
-            VKID.Auth.exchangeCode(code, deviceId)
-              .then(vkidOnSuccess)
-              .catch(vkidOnError);
-          });
-
-          function vkidOnSuccess(data) {
-             floatingOneTap.close();  // Закрываем всплывающую форму авторизации
-              alert("Авторизация прошла успешно!" + JSON.stringify(data));
-              // Или перенаправляем пользователя на личный кабинет
-              // window.location.href = '/dashboard';  // Перенаправляем на внутреннюю страницу
-          }
-
-          function vkidOnError(error) {
-            // Обработка ошибки
-          }
-        }
 
 
-        </script>
-    </div>
 
-    <form method="post" action="/user-wall/145613522">
-        <button type="submit" class="get-wall-button">Получить посты бабушки</button>
+    <form method="post" action="/full-profile">
+        <input type="number" name="user_id" id="user_id" required/>
+        <button type="submit" class="get-wall-button">Получить анализ поста</button>
     </form>
     <form method="post" action="/delete_user">
         <button type="submit" class="delete-button">Удалить профиль</button>

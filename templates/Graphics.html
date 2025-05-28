@@ -5,13 +5,20 @@
     <title>Визуализация профиля {{ user_id }}</title>
 </head>
 <body>
-<h2>График: распределение друзей</h2>
+<h2>График: распределение постов по времени</h2>
 
 <form method="get" style="margin-bottom: 20px;">
-    <label>Цвет по:
-        <select name="color" onchange="this.form.submit()">
+    <label>Цвет по постам:
+        <select name="color_posts" onchange="this.form.submit()">
             <option value="Месяц" {% if color== 'Цвет' %} selected {% endif %}>Месяц</option>
             <option value="Год" {% if color== 'Город' %} selected {% endif %}>Год</option>
+        </select>
+    </label>
+
+    <label>Цвет по друзьям:
+        <select name="color_friends" onchange="this.form.submit()">
+            <option value="Пол" {% if color== 'Цвет' %} selected {% endif %}>Пол</option>
+            <option value="Город" {% if color== 'Город' %} selected {% endif %}>Город</option>
         </select>
     </label>
 
@@ -33,5 +40,9 @@
 </form>
 
 {{ graph_html|safe }}
+<br/>
+{{ graph2|safe }}
+
+<p>Имя пользователя: {{metrics.base_info.first_name }} {{metrics.base_info.last_name }}</p>
 </body>
 </html>

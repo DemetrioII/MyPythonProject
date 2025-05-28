@@ -54,6 +54,13 @@ class Database:
         self.cur.execute("""INSERT INTO jsons (request, user_id) VALUES (?, ?)""", (request, str(current_user_id)))
         self.con.commit()
 
+    def load_request(self, current_user_id: int):
+        try:
+            return self.cur.execute("""SELECT * FROM jsons WHERE user_id = ?""",
+                                (str(current_user_id),)).fetchone()[1]
+        except Exception:
+            return "Такого пользователя нет в БД, либо он не делал запросов"
+
     def delete_by_name(self, name: str):
         try:
             id = self.cur.execute("""
