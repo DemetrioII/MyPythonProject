@@ -132,7 +132,7 @@ def get_metrics():
                         elif tag == "sex":
                             metrics[key][tag][value] = metrics[key][tag].get(value, 0) + 1
 
-        return metrics
+    return metrics
 
 
 @app.post("/full-profile/")
