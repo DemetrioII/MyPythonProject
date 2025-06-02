@@ -1,10 +1,13 @@
 import base64
 import datetime
+import imghdr
 import json
 import asyncio
 from collections import Counter
 import plotly.express as px
 import httpx
+from io import BytesIO
+from PIL import Image
 import pandas as pd
 from requests import *
 
@@ -48,27 +51,52 @@ tasks = []
 db = Database()
 
 
+async def parse(link: str):
+    try:
+        name = link.split("/")[-1]
+        if name[:2] == "id":
+            return name[2:]
+        else:
+            params = {
+                "access_token": VK_SERVICE_KEY,
+                "user_ids": name,
+                "v": "5.199",
+            }
+            print(name)
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get("https://api.vk.com/method/users.get", params=params)
+                data = response.json()
+                # data = await handle_vk_error(data)
+                user_id = data["response"][0].get("id", 0)
+                return json.dumps(user_id, ensure_ascii=False)
+            except Exception as e:
+                return HTTPException(status_code=400, detail="VK ERROR")
+    except:
+        raise HTTPException(status_code=400, detail="Неверный формат ссылки")
+
+
 def get_metrics():
     metrics = dict()
     with open("data.json", "r") as fi:
         raw_data = fi.read()
     data = json.loads(raw_data)
+    relationship_status = {
+        "0": "не указано",
+        "1": "не женат/не замужем",
+        "2": "есть друг/есть подруга",
+        "3": "помолвлен/помолвлена",
+        "4": "женат/замужем",
+        "5": "всё сложно",
+        "6": "в активном поиске",
+        "7": "влюблён/влюблена",
+        "8": "в гражданском браке"
+    }
     for key, info in data.items():
         if key == "base_info":
-            relationship_status = {
-                0: "не указано",
-                1: "не женат/не замужем",
-                2: "есть друг/есть подруга",
-                3: "помолвлен/помолвлена",
-                4: "женат/замужем",
-                5: "всё сложно",
-                6: "в активном поиске",
-                7: "влюблён/влюблена",
-                8: "в гражданском браке"
-            }
             sex_status = {
-                1: "Ж",
-                2: "М"
+                "1": "Ж",
+                "2": "М"
             }
             metrics[key] = info.copy()
             try:
@@ -131,13 +159,14 @@ def get_metrics():
                                 value.get("title", "Unknown"), 0) + 1
                         elif tag == "sex":
                             metrics[key][tag][value] = metrics[key][tag].get(value, 0) + 1
-
-        return metrics
+    with open('parsed_data.json', 'w') as f:
+        f.write(str(metrics).replace("'", '"'))
+    return metrics
 
 
 @app.post("/full-profile/")
-async def get_profile_analyze(user_id: int = Form(...)):
-    return RedirectResponse(url=f"/full-profile/{user_id}", status_code=303)
+async def get_profile_analyze(user_id: str = Form(...)):
+    return RedirectResponse(url=f"/full-profile/{int(await parse(user_id))}", status_code=303)
 
 
 @app.get("/full-profile/{user_id}", tags=["Агрегированный профиль"])
@@ -369,9 +398,8 @@ async def get_llm_analysis():
     # Подгрузка промпта
     with open("prompt.txt", "r", encoding="UTF-8") as f:
         system_message = f.read()
-    with open("data.json", "r", encoding="UTF-8") as f:
+    with open("parsed_data.json", "r", encoding="UTF-8") as f:
         data = f.read()
-        data = str(json.loads(data)['base_info'])
 
     messages = [
         SystemMessage(content=system_message),
@@ -431,7 +459,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         httponly=True,  # Только сервер может читать эту куку
         samesite="lax"  # или strict, зависит от твоей архитектуры
     )
-    return RedirectResponse(url=f"/profile", status_code=303)
+    return response
 
 
 @app.get("/success-login")
@@ -443,7 +471,9 @@ async def success_login(request: Request):
 async def profile_page(request: Request, current_user: User = Depends(get_current_active_user)):
     return templates.TemplateResponse(
         "profile.html",
-        {"request": request, "name": current_user.name, "photo": db.find_by_name(current_user.name)[3]}
+        {"request": request,
+         "name": current_user.name,
+         "photo": base64.b64encode(db.get_image_by_name(current_user.name)).decode('utf-8')}
     )
 
 
@@ -471,7 +501,28 @@ async def register_user(
     if existing_user:
         raise HTTPException(status_code=400, detail="User already registered")
 
-    avatar = await image.read()
+    if not image.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Invalid image format")
+
+    try:
+        avatar = await image.read()
+        image_type = imghdr.what(None, h=avatar)
+        if image_type not in ["jpeg", "png", "gif"]:
+            raise HTTPException(status_code=400, detail="Unsupported image format")
+
+        with Image.open(BytesIO(avatar)) as img:
+            if img.mode in ('RGBA', 'P'):
+                img = img.convert('RGB')
+
+            img.thumbnail((192, 192))
+            output_buffer = BytesIO()
+            img.save(output_buffer, format="JPEG", quality=85)
+            avatar = output_buffer.getvalue()
+
+        if len(avatar) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Image too large (max 5MB)")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading image: {str(e)}")
 
     hashed_password = get_password_hash(password)
     db.create_person(username, hashed_password, avatar, False)

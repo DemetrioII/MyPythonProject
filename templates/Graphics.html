@@ -3,6 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title>Визуализация профиля {{ user_id }}</title>
+    <style>
+        /* Стиль только для ссылки "/gigachat/" */
+        a#gigachat-link {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background: linear-gradient(45deg, #3b82f6, #6366f1);
+            color: white !important;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            font-family: sans-serif;
+        }
+
+        a#gigachat-link:hover {
+            background: linear-gradient(45deg, #2563eb, #4f46e5);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        a#gigachat-link:active {
+            transform: scale(0.98);
+        }
+    </style>
 </head>
 <body>
 <h2>График: распределение постов по времени</h2>
@@ -44,7 +70,7 @@
 {{ graph2|safe }}
 
 <p>Имя пользователя: {{metrics.base_info.first_name }} {{metrics.base_info.last_name }}</p>
-<a href="/gigachat/">Анализ через GigaChat</a>
+<a id="gigachat-link" href="/gigachat/">Анализ через GigaChat</a>
 <a href="/profile/">Назад</a>
 </body>
 </html>
