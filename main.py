@@ -161,6 +161,7 @@ def get_metrics():
                             metrics[key][tag][value] = metrics[key][tag].get(value, 0) + 1
     with open('parsed_data.json', 'w') as f:
         f.write(str(metrics).replace("'", '"'))
+
     return metrics
 
 
@@ -459,7 +460,12 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         httponly=True,  # Только сервер может читать эту куку
         samesite="lax"  # или strict, зависит от твоей архитектуры
     )
-    return response
+    return RedirectResponse(url=f"/profile", status_code=303)
+
+
+@app.get("/success-login")
+async def success_login(request: Request):
+    return templates.TemplateResponse("successfull_register.html", {"request": request})
 
 
 @app.get("/success-login")
