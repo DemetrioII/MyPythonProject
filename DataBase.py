@@ -12,7 +12,6 @@ class Database:
                         "passhash"	TEXT NOT NULL,
                         "image" BLOB NOT NULL,
                         "disabled" BOOLEAN,
-                        "vk_id" INTEGER,
                         PRIMARY KEY("id" AUTOINCREMENT)
                         );""")
         self.cur.execute("""CREATE TABLE IF NOT EXISTS "info" (
@@ -30,7 +29,7 @@ class Database:
         self.con.commit()
 
     def create_person(self, name, password, image, disabled):
-        self.cur.execute("""INSERT INTO person (name, passhash, image, disabled, vk_id) VALUES
+        self.cur.execute("""INSERT INTO person (name, passhash, image, disabled) VALUES
                     (?, ?, ?, ?, 0)
                     """, (name, password, image, disabled))
         self.cur.execute("""INSERT INTO info (reg_time, last_auth) VALUES
@@ -47,8 +46,13 @@ class Database:
         fid = self.cur.execute("""SELECT * FROM person WHERE name = ?""", (name,)).fetchone()
         if fid:
             return fid
-            get_response = self.__get_by_id(int(fid))
-            return get_response
+        return None
+
+    def get_image_by_name(self, name: str):
+        image = self.cur.execute("""SELECT image FROM person WHERE name = ?""", (name,)).fetchone()
+        if image:
+            return image[0]
+        return None
 
     def add_request(self, request: str, current_user_id: int):
         self.cur.execute("""INSERT INTO jsons (request, user_id) VALUES (?, ?)""", (request, str(current_user_id)))

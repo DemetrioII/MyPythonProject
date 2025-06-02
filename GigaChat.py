@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
-parser = StrOutputParser()
+
 
 app = FastAPI()
 
@@ -13,8 +13,10 @@ app = FastAPI()
 load_dotenv()
 TOKEN = os.getenv('GIGA-TOKEN')
 
+
+parser = StrOutputParser()
 model = GigaChat(
-    credentials=TOKEN,
+    credentials=os.getenv('GIGA-TOKEN'),
     scope="GIGACHAT_API_PERS",
     model="GigaChat",
     verify_ssl_certs=False,
@@ -26,8 +28,7 @@ async def get_llm_analysis():
     # Подгрузка промпта
     with open("prompt.txt", "r", encoding="UTF-8") as f :
         system_message = f.read()
-    # Тут лолжна быть подгрузка json из бд
-    with open("parced_data.json", "r", encoding="UTF-8") as f:
+    with open("data.json", "r", encoding="UTF-8") as f:
         data = f.read()
 
     messages = [
@@ -37,7 +38,6 @@ async def get_llm_analysis():
 
     result = model.invoke(messages)
 
-    # Должно загружаться в бд
     summary = parser.invoke(result)
     return summary
 
