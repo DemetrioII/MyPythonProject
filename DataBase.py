@@ -30,7 +30,7 @@ class Database:
 
     def create_person(self, name, password, image, disabled):
         self.cur.execute("""INSERT INTO person (name, passhash, image, disabled) VALUES
-                    (?, ?, ?, ?, 0)
+                    (?, ?, ?, ?)
                     """, (name, password, image, disabled))
         self.cur.execute("""INSERT INTO info (reg_time, last_auth) VALUES
                     (?, ?)""", (str(datetime.datetime.now()), str(datetime.datetime.now())))

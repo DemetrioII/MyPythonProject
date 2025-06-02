@@ -4,11 +4,14 @@ import imghdr
 import json
 import asyncio
 from collections import Counter
+
+import markdown
 import plotly.express as px
 import httpx
 from io import BytesIO
 from PIL import Image
 import pandas as pd
+from markupsafe import Markup
 from requests import *
 
 import matplotlib.pyplot as plt
@@ -394,8 +397,8 @@ model = GigaChat(
 )
 
 
-@app.get("/gigachat", tags=["Анализ через LLM"])
-async def get_llm_analysis():
+@app.get("/gigachat", response_class=HTMLResponse, tags=["Анализ через LLM"])
+async def get_llm_analysis(request: Request):
     # Подгрузка промпта
     with open("prompt.txt", "r", encoding="UTF-8") as f:
         system_message = f.read()
@@ -410,7 +413,11 @@ async def get_llm_analysis():
     result = model.invoke(messages)
 
     summary = parser.invoke(result)
-    return summary
+    html_summary = Markup(summary)
+    return templates.TemplateResponse(
+        "Gigachat.html",
+        {"request": request, "text": html_summary}
+    )
 
 
 @app.get("/", response_class=HTMLResponse)
