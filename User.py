@@ -60,8 +60,7 @@ def get_user(username: str):
     if user_data:
         disabled = False
         return UserInDB(id=user_data[0], name=user_data[1], hashed_password=user_data[2], disabled=bool(user_data[4]),
-                        vk_id=int(user_data[5]))
-    return None
+                        vk_id=0)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -104,7 +103,7 @@ async def get_current_user(token: str = Depends(get_token_from_cookie)):
 
 
 async def get_current_active_user(
-        current_user: User = Depends(get_current_user)) -> User:  # Явно указываем возвращаемый тип
+        current_user: User = Depends(get_current_user)) -> User:
     '''if current_user.disabled:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
